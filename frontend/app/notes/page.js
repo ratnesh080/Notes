@@ -68,7 +68,7 @@ export default function NotesPage() {
           value={form.tags}
           onChange={e => setForm({...form, tags: e.target.value})}
         />
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Note</button>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ">Save Note</button>
       </form>
 
       {/* List */}
