@@ -30,6 +30,9 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('API is running successfully!');
+});
 const notesRouter = require('./routes/notes');
 const bookmarksRouter = require('./routes/bookmarks');
 
