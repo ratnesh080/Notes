@@ -13,7 +13,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000', 
   'http://localhost:5001',
-  'https:https://notes-ten-rouge.vercel.app' 
+  'https://notes-git-main-ratneshs-projects-12b69610.vercel.app/notes' 
 ];
 
 app.use(cors({
