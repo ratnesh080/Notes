@@ -12,7 +12,8 @@ const app = express();
 // Allow your specific Vercel URL (and localhost for testing)
 const allowedOrigins = [
   'http://localhost:3000', 
-  'https:https://notes-ten-rouge.vercel.app' // <--- REPLACE THIS with your actual Vercel URL
+  'http://localhost:5001',
+  'https:https://notes-ten-rouge.vercel.app' 
 ];
 
 app.use(cors({
