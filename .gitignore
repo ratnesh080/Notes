@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment variables (Security Risk!)
+.env
+.env.local
+.env.production
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Mac system files
+.DS_Store
