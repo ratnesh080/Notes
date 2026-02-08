@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
-
+const analyzeNote = require('../utils/aiHelper');
 // GET all notes (with optional search & filter)
 router.get('/', async (req, res) => {
   try {
@@ -26,11 +26,25 @@ router.get('/', async (req, res) => {
 });
 
 // POST new note
+// backend/routes/notes.js
+
 router.post('/', async (req, res) => {
+  const { title, content, tags } = req.body;
+  let finalTags = tags;
+  let aiSummary = "";
+
+  // If tags are empty, let's have the AI generate them (and a summary) immediately
+  if (!tags || tags.length === 0 || (tags.length === 1 && tags[0] === "")) {
+    const aiData = await analyzeNote(content);
+    finalTags = aiData.tags;
+    aiSummary = aiData.summary;
+  }
+
   const note = new Note({
-    title: req.body.title,
-    content: req.body.content,
-    tags: req.body.tags || []
+    title,
+    content,
+    tags: finalTags,
+    summary: aiSummary
   });
 
   try {
@@ -46,6 +60,26 @@ router.delete('/:id', async (req, res) => {
   try {
     await Note.findByIdAndDelete(req.params.id);
     res.json({ message: 'Note deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT route to summarize an existing note
+router.put('/:id/summarize', async (req, res) => {
+  try {
+    const note = await Note.findById(req.params.id);
+    if (!note) return res.status(404).json({ message: "Note not found" });
+
+    // Call the AI Helper we created earlier
+    const aiData = await analyzeNote(note.content);
+
+    // Update the note with new AI data
+    note.summary = aiData.summary;
+    note.tags = aiData.tags; // This replaces old tags with AI-generated ones
+
+    const updatedNote = await note.save();
+    res.json(updatedNote);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

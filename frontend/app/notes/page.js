@@ -1,35 +1,56 @@
 "use client";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaMagic } from 'react-icons/fa';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([]);
   const [form, setForm] = useState({ title: '', content: '', tags: '' });
   const [search, setSearch] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(null); // Tracks which note is loading
 
-  // Fetch Notes
+  // Uses your dynamic environment variable
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
   const fetchNotes = async () => {
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/notes`);
-    setNotes(data);
+    try {
+      // Added search query support back in
+      const { data } = await axios.get(`${API_BASE}/notes?q=${search}`);
+      setNotes(data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+
+  const handleSummarize = async (id) => {
+    setIsSummarizing(id); // Start loading state
+    try {
+      // Changed from localhost to your dynamic API_BASE
+      const { data } = await axios.put(`${API_BASE}/notes/${id}/summarize`);
+      
+      setNotes(notes.map(n => n._id === id ? data : n));
+    } catch (error) {
+      console.error("AI Error:", error);
+      alert("AI Summarization failed. Make sure your OpenAI key is set on Render.");
+    } finally {
+      setIsSummarizing(null); // Stop loading state
+    }
   };
 
   useEffect(() => {
     fetchNotes();
-  }, [search]); // Re-run when search changes
+  }, [search]);
 
-  // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     const tagsArray = form.tags.split(',').map(tag => tag.trim());
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/notes`, { ...form, tags: tagsArray });
+    await axios.post(`${API_BASE}/notes`, { ...form, tags: tagsArray });
     setForm({ title: '', content: '', tags: '' });
     fetchNotes();
   };
 
-  // Handle Delete
   const handleDelete = async (id) => {
-    await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/notes/${id}`);
+    await axios.delete(`${API_BASE}/notes/${id}`);
     fetchNotes();
   };
 
@@ -45,9 +66,9 @@ export default function NotesPage() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* Form */}
+      {/* Form with requested bg-neutral-600 */}
       <form onSubmit={handleSubmit} className="bg-neutral-600 p-6 rounded shadow mb-8">
-        <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
+        <h2 className="text-xl font-semibold mb-4 text-white">Add New Note</h2>
         <input
           className="w-full mb-3 p-2 border rounded"
           placeholder="Title"
@@ -68,7 +89,10 @@ export default function NotesPage() {
           value={form.tags}
           onChange={e => setForm({...form, tags: e.target.value})}
         />
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ">Save Note</button>
+        {/* Button with requested bg-blue-600 */}
+        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Save Note
+        </button>
       </form>
 
       {/* List */}
@@ -81,12 +105,42 @@ export default function NotesPage() {
             >
               <FaTrash />
             </button>
-            <h3 className=" text-gray-900 font-bold text-lg">{note.title}</h3>
+            <h3 className="text-gray-900 font-bold text-lg">{note.title}</h3>
+            
+            {/* AI Summary Section */}
+            {note.summary && (
+              <div className="mt-2 p-2 bg-purple-50 rounded text-sm text-purple-800 border border-purple-100">
+                <strong>AI Summary:</strong> {note.summary}
+              </div>
+            )}
+            
             <p className="text-gray-600 mt-2">{note.content}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {note.tags.map(tag => (
-                <span key={tag} className="text-xs bg-gray-400 px-2 py-1 rounded">{tag}</span>
-              ))}
+            
+            <div className="mt-3 flex flex-wrap gap-2 items-center justify-between">
+              <div className="flex flex-wrap gap-2">
+                {note.tags && note.tags.filter(tag => tag.trim() !== "").map((tag, index) => (
+    <span key={index} className="text-xs bg-gray-400 text-white px-2 py-1 rounded">
+      {tag}
+    </span>
+  ))}
+              </div>
+
+              {/* AI Summarize Button */}
+              <button 
+                onClick={() => handleSummarize(note._id)}
+                disabled={isSummarizing === note._id}
+                className={`text-xs px-3 py-1 rounded flex items-center gap-1 transition ${
+                  isSummarizing === note._id 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                  : "bg-purple-600 text-white hover:bg-purple-700"
+                }`}
+              >
+                {isSummarizing === note._id ? (
+                  <>Thinking...</>
+                ) : (
+                  <>✨ Summarize</>
+                )}
+              </button>
             </div>
           </div>
         ))}
