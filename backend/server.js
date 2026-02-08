@@ -13,19 +13,23 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000', 
   'http://localhost:5001',
-  'https://notes-git-main-ratneshs-projects-12b69610.vercel.app' 
+  'https://notes-ten-rouge.vercel.app/notes' 
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS blocked this origin'));
     }
-    return callback(null, true);
-  }
+  },
+  credentials: true, // Required if you use cookies or headers like 'Authorization'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
